@@ -44,6 +44,13 @@ export class SPRest {
         }
     }
 
+    private getCacheKey() {
+        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0, v = c === "x" ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
     public async createIsolated<T = ITypedHash<any>>(init?: Partial<ISPIsolatedInit<T>>): Promise<SPRest> {
 
         // merge our defaults
@@ -61,7 +68,7 @@ export class SPRest {
         runtime.assign(config);
 
         runtime.assign({
-            __digest_cache_key__: new Date().getTime(),
+            __digest_cache_key__: this.getCacheKey(),
         });
 
         return new SPRest(options, baseUrl, runtime);
