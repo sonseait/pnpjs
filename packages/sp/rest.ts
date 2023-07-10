@@ -60,10 +60,14 @@ export class SPRest {
 
         runtime.assign(config);
 
+        runtime.assign({
+            __digest_cache_key__: new Date().getTime(),
+        });
+
         return new SPRest(options, baseUrl, runtime);
     }
 
-    protected childConfigHook<T>(callback: ({ options: IConfigOptions, baseUrl: string, runtime: Runtime }) => T): T {
+    protected childConfigHook<T>(callback: (params: { options: IConfigOptions; baseUrl: string; runtime: Runtime }) => T): T {
         return callback({ options: this._options, baseUrl: this._baseUrl, runtime: this._runtime });
     }
 }

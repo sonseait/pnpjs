@@ -161,7 +161,7 @@ export class SPBatch extends Batch {
 
             // merge per-request headers
             if (reqInfo.options) {
-                mergeHeaders(headers, reqInfo.options.headers);
+                mergeHeaders(headers, reqInfo.options.headers as HeadersInit);
             }
 
             // lastly we apply any default headers we need that may not exist

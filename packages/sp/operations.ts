@@ -1,15 +1,8 @@
 import { defaultPipelineBinder, IOperation, cloneQueryableData, headers } from "@pnp/odata";
 import { SPHttpClient } from "./sphttpclient.js";
 import { ISharePointQueryable } from "./sharepointqueryable.js";
-import { IFetchOptions, mergeOptions, objectDefinedNotNull, IRequestClient, isFunc, Runtime } from "@pnp/common";
+import { IFetchOptions, mergeOptions, objectDefinedNotNull } from "@pnp/common";
 import { toAbsoluteUrl } from "./utils/toabsoluteurl.js";
-
-export function registerCustomRequestClientFactory(requestClientFactory: () => IRequestClient) {
-    httpClientFactory = isFunc(requestClientFactory) ? () => requestClientFactory : defaultFactory;
-}
-
-const defaultFactory = (runtime: Runtime) => () => new SPHttpClient(runtime);
-let httpClientFactory: (runtime: Runtime) => () => IRequestClient = defaultFactory;
 
 const send = (method: "GET" | "POST" | "DELETE" | "PATCH" | "PUT"): <T = any>(o: ISharePointQueryable, options?: IFetchOptions) => Promise<T> => {
 
@@ -18,7 +11,7 @@ const send = (method: "GET" | "POST" | "DELETE" | "PATCH" | "PUT"): <T = any>(o:
         // use the current runtime
         const runtime = o.getRuntime();
 
-        const operation: IOperation = defaultPipelineBinder(httpClientFactory(runtime))(method);
+        const operation: IOperation = defaultPipelineBinder(() => new SPHttpClient(runtime))(method);
 
         const data = cloneQueryableData(o.data);
         const batchDependency = objectDefinedNotNull(data.batch) ? data.batch.addDependency() : () => {

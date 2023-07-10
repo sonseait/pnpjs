@@ -47,7 +47,7 @@ export class SPHttpClient implements IRequestClient {
         mergeHeaders(headers, this._runtime.get<ISPConfigurationPart, ISPConfigurationProps>("sp")?.headers);
 
         // second we add the local options so we can overwrite the globals
-        mergeHeaders(headers, options.headers);
+        mergeHeaders(headers, options.headers as HeadersInit);
 
         // lastly we apply any default headers we need that may not exist
         if (!headers.has("Accept")) {
@@ -74,8 +74,9 @@ export class SPHttpClient implements IRequestClient {
 
         // if we have either a request digest or an authorization header we don't need a digest
         if (opts.method && opts.method.toUpperCase() !== "GET" && !headers.has("X-RequestDigest") && !headers.has("Authorization")) {
+            const cacheKey = this._runtime.get("__digest_cache_key__");
 
-            const digest = await this._digestCache(extractWebUrl(url));
+            const digest = await this._digestCache(`${extractWebUrl(url)}|${cacheKey}`);
             headers.append("X-RequestDigest", digest);
         }
 
@@ -86,7 +87,7 @@ export class SPHttpClient implements IRequestClient {
 
         // here we need to normalize the headers
         const rawHeaders = new Headers();
-        mergeHeaders(rawHeaders, options.headers);
+        mergeHeaders(rawHeaders, options.headers as HeadersInit);
         options = assign(options, { headers: rawHeaders });
 
         const retry = (ctx: IRetryContext): void => {
@@ -194,9 +195,10 @@ const digests = new Map<string, ICachedDigest>();
 
 function getDigestFactory(client: SPHttpClient): IGetDigest {
 
-    return async (webUrl: string) => {
+    return async (hash: string) => {
+        const [webUrl] = hash.split("|");
 
-        const cachedDigest: ICachedDigest = digests.get(webUrl);
+        const cachedDigest: ICachedDigest = digests.get(hash);
 
         if (cachedDigest !== undefined) {
             const now = new Date();
@@ -226,7 +228,7 @@ function getDigestFactory(client: SPHttpClient): IGetDigest {
             value: parsed.FormDigestValue,
         };
 
-        digests.set(webUrl, newCachedDigest);
+        digests.set(hash, newCachedDigest);
 
         return newCachedDigest.value;
     };
